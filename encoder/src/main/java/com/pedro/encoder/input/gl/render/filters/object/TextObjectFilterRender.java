@@ -16,6 +16,7 @@
 
 package com.pedro.encoder.input.gl.render.filters.object;
 
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.os.Build;
@@ -32,9 +33,12 @@ import com.pedro.encoder.utils.gl.TextStreamObject;
 public class TextObjectFilterRender extends BaseObjectFilterRender {
 
   private String text;
+  private String text1;
+  private String text2;
   private float textSize;
   private int textColor;
   private Typeface typeface;
+  private Bitmap bitmap;
 
   public TextObjectFilterRender() {
     super();
@@ -61,7 +65,17 @@ public class TextObjectFilterRender extends BaseObjectFilterRender {
     ((TextStreamObject) streamObject).load(text, textSize, textColor, typeface);
     shouldLoad = true;
   }
-
+  public  void setMultiText(String text,String text1, String text2,float textSize, int textColor, Typeface typeface,Bitmap bitmap){
+    this.text=text;
+    this.text1=text1;
+    this.text2=text2;
+    this.textSize = textSize;
+    this.textColor = textColor;
+    this.typeface = typeface;
+    this.bitmap=bitmap;
+    ((TextStreamObject) streamObject).load(text,text1,text2, textSize, textColor, typeface,bitmap);
+    shouldLoad = true;
+  }
   public void addText(String text) {
     setText(this.text + text, textSize, textColor, typeface);
   }

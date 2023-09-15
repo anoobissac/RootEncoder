@@ -16,12 +16,15 @@
 
 package com.pedro.streamer.openglexample;
 
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
+import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -31,6 +34,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -111,7 +115,7 @@ public class OpenGlRtmpActivity extends AppCompatActivity
   private File folder;
   private OpenGlView openGlView;
   private SpriteGestureController spriteGestureController = new SpriteGestureController();
-
+  private float density;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -126,10 +130,14 @@ public class OpenGlRtmpActivity extends AppCompatActivity
     Button switchCamera = findViewById(R.id.switch_camera);
     switchCamera.setOnClickListener(this);
     etUrl = findViewById(R.id.et_rtp_url);
-    etUrl.setHint(R.string.hint_rtmp);
+//    etUrl.setHint(R.string.hint_rtmp);
+    etUrl.setText("rtmp://a.rtmp.youtube.com/live2/b008-e9ta-sqdm-wvee-9c78", TextView.BufferType.EDITABLE);
     rtmpCamera1 = new RtmpCamera1(openGlView, this);
     openGlView.getHolder().addCallback(this);
     openGlView.setOnTouchListener(this);
+    DisplayMetrics dm = new DisplayMetrics();
+    getWindowManager().getDefaultDisplay().getMetrics(dm);
+    density=dm.density;
   }
 
   @Override
@@ -313,7 +321,14 @@ public class OpenGlRtmpActivity extends AppCompatActivity
   private void setTextToStream() {
     TextObjectFilterRender textObjectFilterRender = new TextObjectFilterRender();
     rtmpCamera1.getGlInterface().setFilter(textObjectFilterRender);
-    textObjectFilterRender.setText("Hello world", 22, Color.RED);
+    String newline="\n";
+    String text="Scoring"+newline+"Details";
+    String text1="Batting One"+newline+"Batting Two";
+    String text2="Bowling Two"+newline+"Bowling Two";
+    Bitmap bitmap=BitmapFactory.decodeResource(getResources(),R.drawable.scoreblox_nobg100);
+    Bitmap bitmapResized=Bitmap.createScaledBitmap(bitmap,(int)(bitmap.getWidth()/density), (int)(bitmap.getHeight()/density), false);
+//  textObjectFilterRender.setText("Hello world", 22, Color.RED);
+    textObjectFilterRender.setMultiText(text,text1,text2,30,Color.WHITE, Typeface.DEFAULT_BOLD,bitmapResized);
     textObjectFilterRender.setDefaultScale(rtmpCamera1.getStreamWidth(),
         rtmpCamera1.getStreamHeight());
     textObjectFilterRender.setPosition(TranslateTo.CENTER);
