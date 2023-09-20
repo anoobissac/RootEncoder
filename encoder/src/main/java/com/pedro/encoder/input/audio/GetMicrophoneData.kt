@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 pedroSG94.
+ * Copyright (C) 2021 pedroSG94.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.pedro.encoder.input.audio
 
-package com.pedro.srt.utils
+import com.pedro.encoder.Frame
 
 /**
- * Created by pedro on 30/8/23.
+ * Created by pedro on 19/01/17.
  */
-object TimeUtils {
-
-  @JvmStatic
-  fun getCurrentTimeMicro(): Long = System.nanoTime() / 1000
-
-  @JvmStatic
-  fun getCurrentTimeMillis(): Long = System.currentTimeMillis()
+interface GetMicrophoneData {
+  fun inputPCMData(frame: Frame)
 }

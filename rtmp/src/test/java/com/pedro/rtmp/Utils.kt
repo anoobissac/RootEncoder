@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 pedroSG94.
+ * Copyright (C) 2023 pedroSG94.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-package com.pedro.encoder.input.audio;
+package com.pedro.rtmp
 
-import com.pedro.encoder.Frame;
+import org.mockito.MockedStatic
 
 /**
- * Created by pedro on 19/01/17.
+ * Created by pedro on 1/9/23.
  */
+object Utils {
 
-public interface GetMicrophoneData {
-
-  void inputPCMData(Frame frame);
+  suspend fun useStatics(statics: List<MockedStatic<out Any>>, callback: suspend () -> Unit) {
+    val list = statics.toMutableList()
+    if (list.isEmpty()) callback()
+    else if (list.size == 1) {
+      list[0].use {
+        callback()
+      }
+    } else {
+      val value = list.removeAt(0)
+      value.use { useStatics(list, callback) }
+    }
+  }
 }

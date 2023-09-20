@@ -13,9 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.pedro.encoder.audio
 
-package com.pedro.encoder;
+import android.media.MediaCodec
+import android.media.MediaFormat
+import java.nio.ByteBuffer
 
-public interface GetFrame {
-  Frame getInputFrame();
+/**
+ * Created by pedro on 19/01/17.
+ */
+interface GetAacData {
+  fun getAacData(aacBuffer: ByteBuffer, info: MediaCodec.BufferInfo)
+  fun onAudioFormat(mediaFormat: MediaFormat)
 }

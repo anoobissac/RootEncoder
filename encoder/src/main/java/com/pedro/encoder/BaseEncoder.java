@@ -50,7 +50,13 @@ public abstract class BaseEncoder implements EncoderCallback {
   private MediaCodec.Callback callback;
   private long oldTimeStamp = 0L;
   protected boolean shouldReset = true;
+  protected boolean prepared = false;
   private Handler handler;
+  private EncoderErrorCallback encoderErrorCallback;
+
+  public void setEncoderErrorCallback(EncoderErrorCallback encoderErrorCallback) {
+    this.encoderErrorCallback = encoderErrorCallback;
+  }
 
   public void restart() {
     start(false);
@@ -58,6 +64,7 @@ public abstract class BaseEncoder implements EncoderCallback {
   }
 
   public void start() {
+    if (!prepared) throw new IllegalStateException(TAG + " not prepared yet. You must call prepare method before start it");
     if (presentTimeUs == 0) {
       presentTimeUs = System.nanoTime() / 1000;
     }
@@ -78,16 +85,13 @@ public abstract class BaseEncoder implements EncoderCallback {
   private void initCodec() {
     codec.start();
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-      handler.post(new Runnable() {
-        @Override
-        public void run() {
-          while (running) {
-            try {
-              getDataFromEncoder();
-            } catch (IllegalStateException e) {
-              Log.i(TAG, "Encoding error", e);
-              reloadCodec();
-            }
+      handler.post(() -> {
+        while (running) {
+          try {
+            getDataFromEncoder();
+          } catch (IllegalStateException e) {
+            Log.i(TAG, "Encoding error", e);
+            reloadCodec(e);
           }
         }
       });
@@ -109,8 +113,12 @@ public abstract class BaseEncoder implements EncoderCallback {
     }
   }
 
-  private void reloadCodec() {
+  private void reloadCodec(IllegalStateException e) {
     //Sometimes encoder crash, we will try recover it. Reset encoder a time if crash
+    EncoderErrorCallback callback = encoderErrorCallback;
+    if (callback != null) {
+      shouldReset = callback.onEncodeError(TAG, e);
+    }
     if (shouldReset) {
       Log.e(TAG, "Encoder crashed, trying to recover it");
       reset();
@@ -154,6 +162,7 @@ public abstract class BaseEncoder implements EncoderCallback {
     } catch (IllegalStateException | NullPointerException e) {
       codec = null;
     }
+    prepared = false;
     oldTimeStamp = 0L;
   }
 
@@ -254,7 +263,7 @@ public abstract class BaseEncoder implements EncoderCallback {
           inputAvailable(mediaCodec, inBufferIndex);
         } catch (IllegalStateException e) {
           Log.i(TAG, "Encoding error", e);
-          reloadCodec();
+          reloadCodec(e);
         }
       }
 
@@ -265,13 +274,15 @@ public abstract class BaseEncoder implements EncoderCallback {
           outputAvailable(mediaCodec, outBufferIndex, bufferInfo);
         } catch (IllegalStateException e) {
           Log.i(TAG, "Encoding error", e);
-          reloadCodec();
+          reloadCodec(e);
         }
       }
 
       @Override
       public void onError(@NonNull MediaCodec mediaCodec, @NonNull MediaCodec.CodecException e) {
         Log.e(TAG, "Error", e);
+        EncoderErrorCallback callback = encoderErrorCallback;
+        if (callback != null) callback.onCodecError(TAG, e);
       }
 
       @Override

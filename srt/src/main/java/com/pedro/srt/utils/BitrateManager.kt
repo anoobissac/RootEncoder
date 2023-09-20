@@ -24,15 +24,16 @@ package com.pedro.srt.utils
 open class BitrateManager(private val connectCheckerSrt: ConnectCheckerSrt) {
 
   private var bitrate: Long = 0
-  private var timeStamp = System.currentTimeMillis()
+  private var timeStamp = TimeUtils.getCurrentTimeMillis()
 
-  @Synchronized
-  fun calculateBitrate(size: Long) {
+  suspend fun calculateBitrate(size: Long) {
     bitrate += size
-    val timeDiff = System.currentTimeMillis() - timeStamp
+    val timeDiff = TimeUtils.getCurrentTimeMillis() - timeStamp
     if (timeDiff >= 1000) {
-      connectCheckerSrt.onNewBitrateSrt((bitrate / (timeDiff / 1000f)).toLong())
-      timeStamp = System.currentTimeMillis()
+      onMainThread {
+        connectCheckerSrt.onNewBitrateSrt((bitrate / (timeDiff / 1000f)).toLong())
+      }
+      timeStamp = TimeUtils.getCurrentTimeMillis()
       bitrate = 0
     }
   }

@@ -37,6 +37,7 @@ import com.pedro.encoder.Frame;
 public class MicrophoneManager {
 
   private final String TAG = "MicrophoneManager";
+  private final int DEFAULT_BUFFER_SIZE = 2048;
   private int BUFFER_SIZE = 0;
   private int CUSTOM_BUFFER_SIZE = 0;
   protected AudioRecord audioRecord;
@@ -97,7 +98,7 @@ public class MicrophoneManager {
       if (noiseSuppressor) audioPostProcessEffect.enableNoiseSuppressor();
       String chl = (isStereo) ? "Stereo" : "Mono";
       if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
-        throw new IllegalArgumentException("Some parameters specified is not valid");
+        throw new IllegalArgumentException("Some parameters specified are not valid");
       }
       Log.i(TAG, "Microphone created, " + sampleRate + "hz, " + chl);
       created = true;
@@ -138,7 +139,7 @@ public class MicrophoneManager {
         if (noiseSuppressor) audioPostProcessEffect.enableNoiseSuppressor();
         String chl = (isStereo) ? "Stereo" : "Mono";
         if (audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
-          throw new IllegalArgumentException("Some parameters specified is not valid");
+          throw new IllegalArgumentException("Some parameters specified are not valid");
         }
         Log.i(TAG, "Internal microphone created, " + sampleRate + "hz, " + chl);
         created = true;
@@ -164,14 +165,11 @@ public class MicrophoneManager {
     handlerThread = new HandlerThread(TAG);
     handlerThread.start();
     Handler handler = new Handler(handlerThread.getLooper());
-    handler.post(new Runnable() {
-      @Override
-      public void run() {
-        while (running) {
-          Frame frame = read();
-          if (frame != null) {
-            getMicrophoneData.inputPCMData(frame);
-          }
+    handler.post(() -> {
+      while (running) {
+        Frame frame = read();
+        if (frame != null) {
+          getMicrophoneData.inputPCMData(frame);
         }
       }
     });
@@ -183,8 +181,7 @@ public class MicrophoneManager {
       running = true;
       Log.i(TAG, "Microphone started");
     } else {
-      Log.e(TAG, "Error starting, microphone was stopped or not created, "
-          + "use createMicrophone() before start()");
+      throw new IllegalStateException("Error starting, microphone was stopped or not created, use createMicrophone() before start()");
     }
   }
 
@@ -205,8 +202,12 @@ public class MicrophoneManager {
    */
   protected Frame read() {
     int size = audioRecord.read(pcmBuffer, 0, pcmBuffer.length);
-    if (size < 0) return null;
-    return new Frame(muted ? pcmBufferMuted : customAudioEffect.process(pcmBuffer), 0, size);
+    if (size < 0){
+      Log.e(TAG, "read error: " + size);
+      return null;
+    }
+    long timeStamp = System.nanoTime() / 1000;
+    return new Frame(muted ? pcmBufferMuted : customAudioEffect.process(pcmBuffer), 0, size, timeStamp);
   }
 
   /**
@@ -242,7 +243,8 @@ public class MicrophoneManager {
       pcmBuffer = new byte[CUSTOM_BUFFER_SIZE];
       pcmBufferMuted = new byte[CUSTOM_BUFFER_SIZE];
     } else {
-      BUFFER_SIZE = AudioRecord.getMinBufferSize(sampleRate, channel, audioFormat);
+      int minSize = AudioRecord.getMinBufferSize(sampleRate, channel, audioFormat);
+      BUFFER_SIZE = Math.max(minSize, DEFAULT_BUFFER_SIZE);
       pcmBuffer = new byte[BUFFER_SIZE];
       pcmBufferMuted = new byte[BUFFER_SIZE];
     }

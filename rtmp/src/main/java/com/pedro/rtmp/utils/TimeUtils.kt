@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 pedroSG94.
+ * Copyright (C) 2023 pedroSG94.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package com.pedro.encoder.audio;
-
-import android.media.MediaCodec;
-import android.media.MediaFormat;
-
-import java.nio.ByteBuffer;
+package com.pedro.rtmp.utils
 
 /**
- * Created by pedro on 19/01/17.
+ * Created by pedro on 30/8/23.
  */
+object TimeUtils {
 
-public interface GetAacData {
+  @JvmStatic
+  fun getCurrentTimeMillis(): Long = System.currentTimeMillis()
 
-  void getAacData(ByteBuffer aacBuffer, MediaCodec.BufferInfo info);
-
-  void onAudioFormat(MediaFormat mediaFormat);
+  @JvmStatic
+  fun getCurrentTimeNano(): Long = System.nanoTime()
 }
