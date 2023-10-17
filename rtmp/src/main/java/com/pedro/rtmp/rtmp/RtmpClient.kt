@@ -131,7 +131,9 @@ class RtmpClient(private val connectCheckerRtmp: ConnectCheckerRtmp) {
   }
 
   fun setWriteChunkSize(chunkSize: Int) {
-    RtmpConfig.writeChunkSize = chunkSize
+    if (!isStreaming) {
+      RtmpConfig.writeChunkSize = chunkSize
+    }
   }
 
   fun setAuthorization(user: String?, password: String?) {
@@ -321,6 +323,7 @@ class RtmpClient(private val connectCheckerRtmp: ConnectCheckerRtmp) {
     var socket = this.socket ?: throw IOException("Invalid socket, Connection failed")
 
     val message = commandsManager.readMessageResponse(socket)
+    commandsManager.checkAndSendAcknowledgement(socket)
     when (message.getType()) {
       MessageType.SET_CHUNK_SIZE -> {
         val setChunkSize = message as SetChunkSize
@@ -539,8 +542,10 @@ class RtmpClient(private val connectCheckerRtmp: ConnectCheckerRtmp) {
     }
   }
 
-  fun hasCongestion(): Boolean {
-    return rtmpSender.hasCongestion()
+  @JvmOverloads
+  @Throws(IllegalArgumentException::class)
+  fun hasCongestion(percentUsed: Float = 20f): Boolean {
+    return rtmpSender.hasCongestion(percentUsed)
   }
 
   fun resetSentAudioFrames() {
@@ -566,5 +571,9 @@ class RtmpClient(private val connectCheckerRtmp: ConnectCheckerRtmp) {
 
   fun setLogs(enable: Boolean) {
     rtmpSender.setLogs(enable)
+  }
+
+  fun clearCache() {
+    rtmpSender.clearCache()
   }
 }
